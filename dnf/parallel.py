@@ -16,7 +16,7 @@
 #
 # Written by Benjamin Chaney
 
-import sys    
+import sys
 import threading
 from __future__ import print_function
 try:
@@ -30,7 +30,7 @@ class DownloadTask (Thread):
     base = None
     pkgs = None
     output_queue = None
-    
+
     def __init__(self, base, pkgs, output_queue):
         self.base = base
         self.pkgs = pkgs
@@ -52,4 +52,4 @@ class DownloadTask (Thread):
                     print(errstr, file=sys.stderr)
             base.gpgsigcheck([pkg])
             output_queue.put(pkg)
-                         
+
