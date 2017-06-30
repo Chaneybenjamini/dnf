@@ -59,6 +59,7 @@ import dnf.const
 import dnf.exceptions
 import dnf.cli.format
 import dnf.logging
+import dnf.parallel
 import dnf.plugin
 import dnf.persistor
 import dnf.rpm
@@ -209,23 +210,9 @@ class BaseCli(dnf.Base):
             return
 
         if trans:
-            remote_pkgs = self.select_remote_pkgs(install_pkgs)
-
-            if remote_pkgs:
-                logger.info(_('Downloading Packages:'))
-                try:
-                    total_cb = self.output.download_callback_total_cb
-                    self.download_packages(remote_pkgs, self.output.progress,
-                                           total_cb)
-                except dnf.exceptions.DownloadError as e:
-                    specific = dnf.cli.format.indent_block(ucd(e))
-                    errstr = _('Error downloading packages:') + '\n%s' % specific
-                    # setting the new line to prevent next chars being eaten up
-                    # by carriage returns
-                    print()
-                    raise dnf.exceptions.Error(errstr)
-            # Check GPG signatures
-            self.gpgsigcheck(install_pkgs)
+            logger.info(_('Downloading Packages:'))
+            di_queue = queue.Queue()
+            dnf.parallel.DownloadTask(self, install_pkgs, di_queue)
 
         if self.conf.downloadonly:
             return
