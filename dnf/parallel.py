@@ -16,9 +16,12 @@
 #
 # Written by Benjamin Chaney
 
+from __future__ import print_function
+
 import sys
 import threading
-from __future__ import print_function
+import dnf.exceptions
+
 try:
     import queue
 except ImportError:
@@ -26,23 +29,24 @@ except ImportError:
     import Queue as queue
 
 
-class DownloadTask (Thread):
+class DownloadTask (threading.Thread):
     base = None
     pkgs = None
     output_queue = None
 
     def __init__(self, base, pkgs, output_queue):
+        super(DownloadTask, self).__init__()
         self.base = base
         self.pkgs = pkgs
         self.output_queue = output_queue
 
     def run(self):
-        for pkg in pkgs:
-            remote_pkg = base.select_remote_pkgs([pkg])
+        for pkg in self.pkgs:
+            remote_pkg = self.base.select_remote_pkgs([pkg])
             if remote_pkg:
                 try:
-                    base.download_packages(remote_pkg, base.output.progress,
-                                           base.output.download_callback_total_cb)
+                    self.base.download_packages(remote_pkg, self.base.output.progress,
+                                           self.base.output.download_callback_total_cb)
                 except dnf.exceptions.DownloadError as e:
                     specific = dnf.cli.format.indent_block(ucd(e))
                     errstr = _('Error downloading package: ') + '%s\n%s' % pkg, specific
@@ -50,6 +54,6 @@ class DownloadTask (Thread):
                     # by carriage returns
                     print()
                     print(errstr, file=sys.stderr)
-            base.gpgsigcheck([pkg])
-            output_queue.put(pkg)
+            self.base.gpgsigcheck([pkg])
+            self.output_queue.put(pkg)
 

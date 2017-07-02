@@ -28,6 +28,12 @@ from . import output
 from dnf.cli import CliError
 from dnf.i18n import ucd, _
 
+try:
+    import queue
+except ImportError:
+    #python 2
+    import Queue as queue
+
 import collections
 import dnf
 import dnf.cli.commands
@@ -212,7 +218,8 @@ class BaseCli(dnf.Base):
         if trans:
             logger.info(_('Downloading Packages:'))
             di_queue = queue.Queue()
-            dnf.parallel.DownloadTask(self, install_pkgs, di_queue)
+            dt = dnf.parallel.DownloadTask(self, install_pkgs, di_queue)
+            dt.start()
 
         if self.conf.downloadonly:
             return
